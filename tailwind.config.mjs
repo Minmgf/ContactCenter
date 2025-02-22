@@ -11,6 +11,14 @@ export default {
         background: "var(--background)",
         foreground: "var(--foreground)",
       },
+      fontFamily: {
+        customFont: ['"inter"', "sans-serif"],
+        // Add more custom font families as needed
+      },
+      backgroundImage: {
+        'hero-img': "url('/phone.png')",
+        'footer-texture': "url('/img/footer-texture.png')",
+      }
     },
   },
   plugins: [],
