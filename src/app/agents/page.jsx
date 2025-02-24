@@ -6,7 +6,6 @@ import { useSession } from 'next-auth/react'
 import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { MdEdit } from "react-icons/md";
-import { FaTrash } from "react-icons/fa";
 import { FaPhoneSlash } from "react-icons/fa";
 
 const AgentsPage = () => {
@@ -332,10 +331,19 @@ const AgentsPage = () => {
                         </div>
                     ))}
                 </div>
+
                 {/* 🔴 Solo los administradores ven la cola de espera */}
                 {session?.user?.admin && (
                     <div className="mt-6">
-                        <h2 className="text-xl font-semibold mb-2">Clientes en Cola</h2>
+                    <h2 className="text-xl font-semibold mb-2">Clientes en Cola</h2>
+                    <label className="text-white ">Filtrar Clientes:</label>
+                    <select onChange={(e) => setFilterTime(e.target.value)} className="p-1 border text-black my-2">
+                        <option value="todos">Todos</option>
+                        <option value="corto">Menos de 2 min</option>
+                        <option value="medio">2 - 5 min</option>
+                        <option value="largo">Más de 5 min</option>
+                    </select>
+
                         <ul>
                             {queue.length === 0 ? (
                                 <p>No hay clientes en espera</p>
