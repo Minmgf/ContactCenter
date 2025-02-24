@@ -391,10 +391,9 @@ const AgentsPage = () => {
                                 filteredQueue.map(user => (
                                     <li key={user._id} className="flex flex-col md:flex-row  justify-between p-2 border mb-2">
                                         {user.name} - {user.email}
-                                        <span className="text-yellow-400">
-                                            {/* ✅ Ahora muestra correctamente el tiempo de espera */}
+                                        {/* <span className="text-yellow-400">
                                             ({`Espera: ${user.waitTime} segundos`})
-                                        </span>
+                                        </span> */}
                                         <select onChange={(e) => handleAssignAgent(user._id, e.target.value)} className="p-1 border text-gray-800">
                                             <option value="">Seleccionar Agente</option>
                                             {agents.map(agent => (

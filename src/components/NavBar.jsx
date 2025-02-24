@@ -13,7 +13,7 @@ function AuthLinks() {
     if (status === 'authenticated') {
         return (
             <div className='flex items-center gap-4'>
-                <Link href={'/'} className=" hidden md:block whitespace-nowrap ">
+                <Link href={'/'} className=" hidden md:flex lg:flex whitespace-nowrap ">
                     Hola, {user?.name}
                 </Link>
                 <button
