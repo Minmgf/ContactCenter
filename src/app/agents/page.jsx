@@ -56,13 +56,33 @@ const AgentsPage = () => {
 
     const fetchQueue = async () => {
         try {
-            const res = await fetch('/api/users/in-queue')
-            const data = await res.json()
-            setQueue(data)
+            const res = await fetch('/api/users/in-queue');
+            const data = await res.json();
+    
+            console.log("🔍 Datos de la cola desde API:", data);
+    
+            const updatedQueue = data.map(client => {
+                if (!client.requestTime || isNaN(client.requestTime)) {
+                    return { ...client, waitTime: 'Tiempo no disponible' }; // ⛔ Evita NaN
+                }
+    
+                const waitTime = Math.floor((Date.now() - Number(client.requestTime)) / 1000); // ⏳ Calcular en segundos
+                return { ...client, waitTime };
+            });
+    
+            setQueue(updatedQueue);
+    
+            // ✅ Mantener `inQueue` en `true` si el usuario aún está en la cola
+            if (session?.user) {
+                const isUserStillInQueue = updatedQueue.some(client => client._id === session.user.id);
+                setInQueue(isUserStillInQueue);
+            }
+    
         } catch (error) {
-            console.error('❌ Error al obtener la cola de clientes:', error)
+            console.error('❌ Error al obtener la cola de clientes:', error);
         }
-    }
+    };
+
 
     const checkQueueStatus = async () => {
         try {
@@ -234,11 +254,8 @@ const AgentsPage = () => {
                 callDuration: data.callDuration || 0
             });
 
-            if (!data.assignedAgent && !data.currentCallClient) {
-                setInQueue(false); // Sacar al usuario de la cola si ya no tiene una llamada
-            }
 
-            await fetchAgents(); // 🔄 Asegurar que la lista de agentes se actualiza correctamente
+            await fetchAgents();
         } catch (error) {
             console.error('❌ Error al obtener estado de la llamada:', error);
         }
@@ -252,6 +269,24 @@ const AgentsPage = () => {
             return () => clearInterval(interval)
         }
     }, [session])
+
+
+
+    // FILTROS
+    const filteredAgents = agents.filter(agent => {
+        if (filterStatus === 'todos') return true;
+        if (filterStatus === 'disponible' && !agent.currentCallClient) return true;
+        if (filterStatus === 'en llamada' && agent.currentCallClient) return true;
+        return false;
+    });
+
+    const filteredQueue = queue.filter(client => {
+        if (filterTime === 'todos') return true;
+        if (filterTime === 'corto' && client.waitTime < 120) return true;
+        if (filterTime === 'medio' && client.waitTime >= 120 && client.waitTime <= 300) return true;
+        if (filterTime === 'largo' && client.waitTime > 300) return true;
+        return false;
+    });
 
     return (
         <div className="text-white">
@@ -305,9 +340,10 @@ const AgentsPage = () => {
                         <option value="en llamada">En Llamada</option>
                     </select>
 
+                    {filteredAgents.map((agent) => (
 
-                    {agents.map((agent) => (
                         <div key={agent._id} className="flex justify-between gap-3 p-2 border mb-2">
+
                             <p className="w-1/3">{agent.name} - {agent.email}</p>
                             <div className="w-1/3 text-center">
                                 {agent.currentCallClient ? (
@@ -335,22 +371,26 @@ const AgentsPage = () => {
                 {/* 🔴 Solo los administradores ven la cola de espera */}
                 {session?.user?.admin && (
                     <div className="mt-6">
-                    <h2 className="text-xl font-semibold mb-2">Clientes en Cola</h2>
-                    <label className="text-white ">Filtrar Clientes:</label>
-                    <select onChange={(e) => setFilterTime(e.target.value)} className="p-1 border text-black my-2">
-                        <option value="todos">Todos</option>
-                        <option value="corto">Menos de 2 min</option>
-                        <option value="medio">2 - 5 min</option>
-                        <option value="largo">Más de 5 min</option>
-                    </select>
+                        <h2 className="text-xl font-semibold mb-2">Clientes en Cola</h2>
+                        <label className="text-white">Filtrar Clientes:</label>
+                        <select onChange={(e) => setFilterTime(e.target.value)} className="p-1 border text-black my-2">
+                            <option value="todos">Todos</option>
+                            <option value="corto">Menos de 2 min</option>
+                            <option value="medio">2 - 5 min</option>
+                            <option value="largo">Más de 5 min</option>
+                        </select>
 
                         <ul>
-                            {queue.length === 0 ? (
+                            {filteredQueue.length === 0 ? (
                                 <p>No hay clientes en espera</p>
                             ) : (
-                                queue.map(user => (
+                                filteredQueue.map(user => (
                                     <li key={user._id} className="flex justify-between p-2 border mb-2">
                                         {user.name} - {user.email}
+                                        <span className="text-yellow-400">
+                                            {/* ✅ Ahora muestra correctamente el tiempo de espera */}
+                                            ({`Espera: ${user.waitTime} segundos`})
+                                        </span>
                                         <select onChange={(e) => handleAssignAgent(user._id, e.target.value)} className="p-1 border text-gray-800">
                                             <option value="">Seleccionar Agente</option>
                                             {agents.map(agent => (
@@ -363,6 +403,7 @@ const AgentsPage = () => {
                         </ul>
                     </div>
                 )}
+
             </div>
             <Footer />
         </div>
