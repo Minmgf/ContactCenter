@@ -30,12 +30,12 @@ const Login = () => {
   }
 
   return (
-    <div className="flex items-center min-h-screen w-full ">
-      <section className="w-1/2 flex justify-center items-center h-screen p-4">
+    <div className="flex items-center justify-center min-h-screen w-full ">
+      <section className="hidden md:flex  md:w-1/2  justify-center items-center h-screen p-4">
         <Image src="/logo.png" width={500} height={500} alt="Logo" />
       </section>
 
-      <section className="flex-col w-1/2 flex items-center justify-center h-screen">
+      <section className=" flex-col md:w-1/2 flex items-center justify-center h-screen">
         <form
           onSubmit={handleLogin}
           className="flex flex-col gap-4 justify-center items-center p-4 rounded-lg bg-gray-500 bg-opacity-55 drop-shadow-lg">

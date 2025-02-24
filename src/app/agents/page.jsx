@@ -344,7 +344,11 @@ const AgentsPage = () => {
 
                         <div key={agent._id} className="flex justify-between gap-3 p-2 border mb-2">
 
-                            <p className="w-1/3">{agent.name} - {agent.email}</p>
+                            <span className="w-1/3 flex gap-4">
+                                <p>{agent.name}</p>
+                                <p className='hidden md:block'> {agent.email}</p>
+                            </span>
+                            
                             <div className="w-1/3 text-center">
                                 {agent.currentCallClient ? (
                                     <span className="text-red-400">En llamada</span>
@@ -385,7 +389,7 @@ const AgentsPage = () => {
                                 <p>No hay clientes en espera</p>
                             ) : (
                                 filteredQueue.map(user => (
-                                    <li key={user._id} className="flex justify-between p-2 border mb-2">
+                                    <li key={user._id} className="flex flex-col md:flex-row  justify-between p-2 border mb-2">
                                         {user.name} - {user.email}
                                         <span className="text-yellow-400">
                                             {/* ✅ Ahora muestra correctamente el tiempo de espera */}

@@ -13,7 +13,7 @@ function AuthLinks() {
     if (status === 'authenticated') {
         return (
             <div className='flex items-center gap-4'>
-                <Link href={'/'} className="whitespace-nowrap ">
+                <Link href={'/'} className=" hidden md:block whitespace-nowrap ">
                     Hola, {user?.name}
                 </Link>
                 <button
@@ -40,9 +40,11 @@ function AuthLinks() {
 export default function Navbar() {
     return (
         <nav className="flex justify-between p-4  text-white">
-            <div className="font-bold">ContactCenter</div>
+            <div className="font-bold">
+                <Link href={'/'}>ContactCenter</Link>
+            </div>
             <div className="flex gap-4">
-                <Link href={'/'}>Inicio</Link>
+                <Link className='hidden md:block' href={'/'}>Inicio</Link>
                 <Link href={'/agents'}>Agentes</Link>
             </div>
             <div className="">

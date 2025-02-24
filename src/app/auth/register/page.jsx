@@ -46,7 +46,7 @@ const Register = () => {
 
     return (
         <div className='flex justify-center items-center min-h-screen w-full'>
-            <section className='w-1/2 flex justify-center items-center h-screen p-4'>
+            <section className='w-1/2 hidden md:flex justify-center items-center h-screen p-4'>
                 <Image
                     className='mx-auto'
                     src="/logo.png"
@@ -56,7 +56,7 @@ const Register = () => {
                 />
             </section>
 
-            <section className="flex-col w-1/2 flex items-center justify-center h-screen">
+            <section className="flex-col md:w-1/2 flex items-center justify-center h-screen">
                 <form
                     onSubmit={handleRegister}
                     className="flex flex-col gap-4 justify-center items-center p-4 rounded-lg bg-gray-500 bg-opacity-55 drop-shadow-lg">
@@ -100,7 +100,7 @@ const Register = () => {
                     </button>
 
                     <span className='text-sm'>
-                        ¿Ya tienes cuenta? <Link href='/login' className='text-white'>Inicia sesión aquí</Link>
+                        ¿Ya tienes cuenta? <Link href='/auth/login' className='text-white'>Inicia sesión aquí</Link>
                     </span>
                 </form>
             </section>

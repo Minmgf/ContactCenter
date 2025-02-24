@@ -6,7 +6,7 @@ import Link from 'next/link'
 const Hero = () => {
   return (
     <div className='flex w-full h-[500px]'>
-      <div className="w-1/2 px-3 py-2 flex flex-col justify-center gap-4 ">
+      <div className=" w-full md:w-1/2 px-3 py-2 flex flex-col justify-center gap-4 ">
         <p className='bg-clip-text text-transparent bg-gradient-to-r from-white to-blue-600 text-5xl font-bold'>
           Contact Center
         </p>
@@ -19,7 +19,7 @@ const Hero = () => {
         </section>
       </div>
 
-      <div className="w-1/2   ">
+      <div className=" md:block hidden w-1/2   ">
         <SplineBackground/>
       </div>
     </div>
