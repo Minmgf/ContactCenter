@@ -312,9 +312,9 @@ const AgentsPage = () => {
                             <p className="w-1/3">{agent.name} - {agent.email}</p>
                             <div className="w-1/3 text-center">
                                 {agent.currentCallClient ? (
-                                    <span className="text-green-400">En llamada con {agent.currentCallClient.name}</span>
+                                    <span className="text-red-400">En llamada</span>
                                 ) : (
-                                    <span className="text-gray-400">Disponible</span>
+                                    <span className="text-green-400">Disponible</span>
                                 )}
                             </div>
                             {session?.user?.admin && (
