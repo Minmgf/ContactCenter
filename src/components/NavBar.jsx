@@ -43,7 +43,6 @@ export default function Navbar() {
             <div className="font-bold">ContactCenter</div>
             <div className="flex gap-4">
                 <Link href={'/'}>Inicio</Link>
-                <Link href={'/about'}>Acerca de</Link>
                 <Link href={'/agents'}>Agentes</Link>
             </div>
             <div className="">
