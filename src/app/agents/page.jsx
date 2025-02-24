@@ -7,6 +7,7 @@ import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { MdEdit } from "react-icons/md";
 import { FaTrash } from "react-icons/fa";
+import { FaPhoneSlash } from "react-icons/fa";
 
 const AgentsPage = () => {
     const { data: session, status } = useSession()
@@ -16,9 +17,11 @@ const AgentsPage = () => {
     const [name, setName] = useState('')
     const [email, setEmail] = useState('')
     const [loading, setLoading] = useState(false)
-    const [editingAgent, setEditingAgent] = useState(null) // 🔹 Nuevo estado para editar agentes
+    const [editingAgent, setEditingAgent] = useState(null)
     const [inQueue, setInQueue] = useState(false)
     const [callStatus, setCallStatus] = useState({ assignedAgent: null, callDuration: 0 })
+    const [filterStatus, setFilterStatus] = useState('todos')
+    const [filterTime, setFilterTime] = useState('todos');
 
     useEffect(() => {
         if (status === 'unauthenticated') {
@@ -43,6 +46,9 @@ const AgentsPage = () => {
         try {
             const res = await fetch('/api/agents');
             const data = await res.json();
+
+            console.log("📞 Lista de Agentes desde la API:", data);
+
             setAgents(data);
         } catch (error) {
             console.error('❌ Error al obtener agentes:', error);
@@ -63,8 +69,14 @@ const AgentsPage = () => {
         try {
             if (!session?.user?.id) return
 
+            console.log("📨 Verificando estado de la cola para ID:", session.user.id)
+
             const res = await fetch(`/api/users/${session.user.id}`)
-            if (!res.ok) return
+            if (!res.ok) {
+                const text = await res.text()
+                console.error("❌ Respuesta inesperada:", text)
+                return
+            }
 
             const data = await res.json()
             setInQueue(data.inQueue)
@@ -75,7 +87,12 @@ const AgentsPage = () => {
 
     const handleRequestCall = async () => {
         try {
-            if (!session?.user?.id) return
+            if (!session?.user?.id) {
+                console.error("⚠️ El usuario no tiene un ID válido:", session?.user)
+                return
+            }
+
+            console.log("📨 Enviando solicitud con ID:", session.user.id)
 
             const res = await fetch('/api/users/request-call', {
                 method: 'PATCH',
@@ -83,9 +100,14 @@ const AgentsPage = () => {
                 body: JSON.stringify({ id: session.user.id })
             })
 
-            if (!res.ok) return
+            if (!res.ok) {
+                const text = await res.text()
+                console.error("❌ Respuesta inesperada:", text)
+                return
+            }
 
             const data = await res.json()
+            console.log("✅ Usuario agregado a la cola:", data)
             setInQueue(true)
         } catch (error) {
             console.error("❌ Error en la solicitud de llamada:", error)
@@ -117,7 +139,6 @@ const AgentsPage = () => {
         }
     }
 
-    // 📌 Cargar datos del agente para edición
     const handleEditAgent = (agent) => {
         setEditingAgent(agent)
         setName(agent.name)
@@ -132,8 +153,15 @@ const AgentsPage = () => {
                 body: JSON.stringify({ id })
             });
 
-            if (!res.ok) return
+            if (!res.ok) {
+                const text = await res.text();
+                console.error("❌ Error en `handleEndCall()`, estado:", res.status, "Respuesta:", text);
+                return;
+            }
 
+            console.log("✅ Llamada finalizada para el agente:", id);
+
+            // 🔄 Refrescar datos después de finalizar la llamada
             await fetchAgents();
             await fetchQueue();
             await fetchCallStatus();
@@ -142,7 +170,6 @@ const AgentsPage = () => {
         }
     };
 
-    // 📌 ELIMINAR AGENTE (desde el CRUD)
     const handleDeleteAgent = async () => {
         if (!editingAgent) return;
 
@@ -161,6 +188,71 @@ const AgentsPage = () => {
             console.error('❌ Error al eliminar agente:', error);
         }
     }
+
+    const handleAssignAgent = async (userId, agentId) => {
+        try {
+            console.log("📨 Asignando agente:", agentId, "a usuario:", userId)
+
+            const res = await fetch('/api/users/assign-agent', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId, agentId })
+            })
+
+            if (!res.ok) {
+                const text = await res.text()
+                console.error("❌ Respuesta inesperada en `handleAssignAgent()`, estado:", res.status, "Respuesta:", text)
+                return
+            }
+
+            const data = await res.json()
+            console.log("✅ Llamada asignada correctamente:", data)
+
+            fetchQueue()
+            fetchAgents()
+            fetchCallStatus()
+        } catch (error) {
+            console.error('❌ Error al asignar agente:', error)
+        }
+    }
+
+    const fetchCallStatus = async () => {
+        try {
+            const res = await fetch(`/api/users/call-status/${session.user.id}`);
+            if (!res.ok) {
+                const text = await res.text();
+                console.error("❌ Error en `fetchCallStatus()`:", text);
+                return;
+            }
+
+            const data = await res.json();
+
+            console.log("📞 Estado de llamada actualizado desde la API:", data);
+
+            setCallStatus({
+                assignedAgent: data.assignedAgent || null,
+                currentCallClient: data.currentCallClient || null,
+                callDuration: data.callDuration || 0
+            });
+
+            if (!data.assignedAgent && !data.currentCallClient) {
+                setInQueue(false); // Sacar al usuario de la cola si ya no tiene una llamada
+            }
+
+            await fetchAgents(); // 🔄 Asegurar que la lista de agentes se actualiza correctamente
+        } catch (error) {
+            console.error('❌ Error al obtener estado de la llamada:', error);
+        }
+    };
+
+    useEffect(() => {
+        if (session?.user) {
+            const interval = setInterval(() => {
+                fetchCallStatus()
+            }, 5000)
+            return () => clearInterval(interval)
+        }
+    }, [session])
 
     return (
         <div className="text-white">
@@ -190,7 +282,31 @@ const AgentsPage = () => {
                 )}
 
                 <h2 className="text-xl font-semibold mb-2">Agentes en turno</h2>
+                {!session?.user?.admin && (
+                    <button
+                        onClick={handleRequestCall}
+                        disabled={inQueue || callStatus.assignedAgent}
+                        className={`mb-4 p-2 mx-auto w-full rounded-lg text-white ${callStatus.assignedAgent ? 'bg-green-500' : inQueue ? 'bg-gray-500' : 'bg-yellow-500'}`}
+                    >
+                        {callStatus.assignedAgent
+                            ? `En llamada con el Agente ${callStatus.assignedAgent.name}`
+                            // ? `En llamada con el Agente ${callStatus.assignedAgent.name} (${callStatus.callDuration}s)`
+                            : inQueue
+                                ? 'Pronto se te atenderá'
+                                : 'Solicitar Llamada'}
+                    </button>
+                )}
                 <div>
+
+                    {/* 🔹 Filtro de Agentes */}
+                    <label className="text-white">Filtrar Agentes:</label>
+                    <select onChange={(e) => setFilterStatus(e.target.value)} className="p-1 mb-2 border text-black">
+                        <option value="todos">Todos</option>
+                        <option value="disponible">Disponibles</option>
+                        <option value="en llamada">En Llamada</option>
+                    </select>
+
+
                     {agents.map((agent) => (
                         <div key={agent._id} className="flex justify-between gap-3 p-2 border mb-2">
                             <p className="w-1/3">{agent.name} - {agent.email}</p>
@@ -203,14 +319,42 @@ const AgentsPage = () => {
                             </div>
                             {session?.user?.admin && (
                                 <div className="flex gap-2">
+                                    {agent.currentCallClient && (
+                                        <button onClick={() => handleEndCall(agent._id)} className="text-red-500 text-x p-1">
+                                            <FaPhoneSlash />
+                                        </button>
+                                    )}
                                     <button onClick={() => handleEditAgent(agent)} className=" text-white p-1">
-                                    <MdEdit />
+                                        <MdEdit />
                                     </button>
                                 </div>
                             )}
                         </div>
                     ))}
                 </div>
+                {/* 🔴 Solo los administradores ven la cola de espera */}
+                {session?.user?.admin && (
+                    <div className="mt-6">
+                        <h2 className="text-xl font-semibold mb-2">Clientes en Cola</h2>
+                        <ul>
+                            {queue.length === 0 ? (
+                                <p>No hay clientes en espera</p>
+                            ) : (
+                                queue.map(user => (
+                                    <li key={user._id} className="flex justify-between p-2 border mb-2">
+                                        {user.name} - {user.email}
+                                        <select onChange={(e) => handleAssignAgent(user._id, e.target.value)} className="p-1 border text-gray-800">
+                                            <option value="">Seleccionar Agente</option>
+                                            {agents.map(agent => (
+                                                <option key={agent._id} value={agent._id}>{agent.name}</option>
+                                            ))}
+                                        </select>
+                                    </li>
+                                ))
+                            )}
+                        </ul>
+                    </div>
+                )}
             </div>
             <Footer />
         </div>
